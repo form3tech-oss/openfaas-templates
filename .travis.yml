@@ -1,0 +1,9 @@
+language: go
+go:
+- 1.13.x
+services:
+- docker
+script:
+- make install-deps
+- make lint
+- make docker.build
