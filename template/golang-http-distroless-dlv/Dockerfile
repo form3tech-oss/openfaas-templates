@@ -1,5 +1,4 @@
 ARG BUILDER_BASE_IMAGE="golang:1.13.4"
-ARG GOPROXY=""
 
 FROM openfaas/of-watchdog:0.7.2 as watchdog
 
@@ -7,10 +6,15 @@ FROM golang:1.13.4 AS dlv
 RUN go get -u github.com/go-delve/delve/cmd/dlv
 
 FROM ${BUILDER_BASE_IMAGE} as builder
+ARG GITHUB_USERNAME=""
+ARG GITHUB_TOKEN=""
+ARG GOPRIVATE=""
+ARG GOPROXY=""
 ENV CGO_ENABLED=0
 ENV GOCACHE=/root/.cache
 RUN mkdir -p /go/src/handler
 WORKDIR /go/src/handler/function
+RUN [ "${GITHUB_USERNAME}" != "" ] && echo "machine github.com login ${GITHUB_USERNAME} password ${GITHUB_TOKEN}" >> /root/.netrc || :
 COPY function/go.mod function/go.sum ./
 RUN go mod download
 WORKDIR /go/src/handler
