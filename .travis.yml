@@ -3,6 +3,8 @@ go:
 - 1.13.x
 services:
 - docker
+env:
+- DOCKER_BUILDKIT=1
 script:
 - make install-deps
 - make lint
