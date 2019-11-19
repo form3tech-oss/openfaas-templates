@@ -1,14 +1,13 @@
-ARG BUILDER_BASE_IMAGE="golang:1.13.4"
+# syntax=docker/dockerfile:1.1.3-experimental
 
 FROM openfaas/of-watchdog:0.7.2 as watchdog
 
-FROM ${BUILDER_BASE_IMAGE} as builder
+FROM golang:1.13.4 as builder
 ARG GITHUB_USERNAME=""
 ARG GITHUB_TOKEN=""
 ARG GOPRIVATE=""
 ARG GOPROXY=""
-ENV GOCACHE=/root/.cache
-RUN go get -u github.com/go-delve/delve/cmd/dlv
+RUN --mount=type=cache,target=/root/.cache/go-build go get -u github.com/go-delve/delve/cmd/dlv
 RUN mkdir -p /go/src/handler
 WORKDIR /go/src/handler/function
 RUN [ "${GITHUB_USERNAME}" != "" ] && echo "machine github.com login ${GITHUB_USERNAME} password ${GITHUB_TOKEN}" >> /root/.netrc || :
@@ -18,10 +17,7 @@ WORKDIR /go/src/handler
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN CGO_ENABLED=0 go build -gcflags "all=-N -l" --installsuffix cgo -o /handler -v .
-
-FROM ${BUILDER_BASE_IMAGE} as gocache
-COPY --from=builder /root/.cache /root/.cache
+RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 go build -gcflags "all=-N -l" -o /handler -tags netgo -v .
 
 FROM gcr.io/distroless/base:debug
 ENV fprocess="/dlv --listen=:2345 --headless=true --api-version=2 --accept-multiclient exec /handler"

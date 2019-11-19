@@ -1,14 +1,12 @@
-ARG BUILDER_BASE_IMAGE="golang:1.13.4"
+# syntax=docker/dockerfile:1.1.3-experimental
 
 FROM openfaas/of-watchdog:0.7.2 as watchdog
 
-FROM ${BUILDER_BASE_IMAGE} as builder
+FROM golang:1.13.4 as builder
 ARG GITHUB_USERNAME=""
 ARG GITHUB_TOKEN=""
 ARG GOPRIVATE=""
 ARG GOPROXY=""
-ENV CGO_ENABLED=0
-ENV GOCACHE=/root/.cache
 RUN mkdir -p /go/src/handler
 WORKDIR /go/src/handler/function
 RUN [ "${GITHUB_USERNAME}" != "" ] && echo "machine github.com login ${GITHUB_USERNAME} password ${GITHUB_TOKEN}" >> /root/.netrc || :
@@ -18,10 +16,7 @@ WORKDIR /go/src/handler
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN go build --installsuffix cgo --ldflags='-s -w' -o /handler -v .
-
-FROM ${BUILDER_BASE_IMAGE} as gocache
-COPY --from=builder /root/.cache /root/.cache
+RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 go build --ldflags='-d -s -w' -o /handler -tags netgo -v .
 
 FROM gcr.io/distroless/static:nonroot
 ENV fprocess="/handler"
