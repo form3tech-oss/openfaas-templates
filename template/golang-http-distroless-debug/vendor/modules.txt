@@ -1,0 +1,10 @@
+# github.com/konsorten/go-windows-terminal-sequences v1.0.1
+github.com/konsorten/go-windows-terminal-sequences
+# github.com/openfaas-incubator/go-function-sdk v0.0.0-20191017092257-70701da50a91
+github.com/openfaas-incubator/go-function-sdk
+# github.com/sirupsen/logrus v1.4.2
+github.com/sirupsen/logrus
+# golang.org/x/sys v0.0.0-20190422165155-953cdadca894
+golang.org/x/sys/unix
+# handler/function v0.0.0-00010101000000-000000000000 => ./function
+handler/function
