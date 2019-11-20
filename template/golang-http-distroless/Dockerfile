@@ -5,16 +5,12 @@ FROM openfaas/of-watchdog:0.7.2 as watchdog
 FROM golang:1.13.4 as builder
 ARG GITHUB_USERNAME=""
 ARG GITHUB_TOKEN=""
+ARG GOFLAGS=""
 ARG GOPRIVATE=""
 ARG GOPROXY=""
 RUN mkdir -p /go/src/handler
 WORKDIR /go/src/handler/function
 RUN [ "${GITHUB_USERNAME}" != "" ] && echo "machine github.com login ${GITHUB_USERNAME} password ${GITHUB_TOKEN}" >> /root/.netrc || :
-COPY function/go.mod function/go.sum ./
-RUN go mod download
-WORKDIR /go/src/handler
-COPY go.mod go.sum ./
-RUN go mod download
 COPY . .
 RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 go build --ldflags='-d -s -w' -o /handler -tags netgo -v .
 
