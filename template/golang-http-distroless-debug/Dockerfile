@@ -9,11 +9,14 @@ ARG GO111MODULE="off"
 ARG GOFLAGS=""
 ARG GOPRIVATE=""
 ARG GOPROXY=""
+ARG MODULE_PATH="handler"
 RUN --mount=type=cache,target=/root/.cache/go-build go get -u github.com/go-delve/delve/cmd/dlv
-RUN mkdir -p /go/src/handler
-WORKDIR /go/src/handler
 RUN [ "${GITHUB_USERNAME}" != "" ] && echo "machine github.com login ${GITHUB_USERNAME} password ${GITHUB_TOKEN}" >> /root/.netrc || :
+RUN mkdir -p /go/src/$MODULE_PATH
+WORKDIR /go/src/$MODULE_PATH
 COPY . .
+RUN mv ./function ./function.tmp && mv ./function.tmp/function . && rm -rf ./function.tmp
+RUN sed -i "s|handler/function|$MODULE_PATH/function|g" go.mod handler.go
 RUN --mount=type=cache,target=/root/.cache/go-build CGO_ENABLED=0 go build -gcflags "all=-N -l" -o /handler -tags netgo -v .
 
 FROM gcr.io/distroless/base:debug
